@@ -326,7 +326,7 @@ class Instruction:
 def PUSH(c, X, output=None):
     return Instruction(stack_instruction=f"PUSH_{c}",
                        register_instruction="COPY",
-                       branch_instruction="NONZERO",
+                       branch_instruction="NONE",
                        first_register_address="ZERO",
                        second_register_address="ZERO",
                        true_branch=X,
@@ -403,7 +403,7 @@ def COPY(x, y, Z, output=None):
 def OUTPUT(X, output):
     return Instruction(stack_instruction=f"NONE",
                        register_instruction="COPY",
-                       branch_instruction="NONZERO",
+                       branch_instruction="NONE",
                        first_register_address="ZERO",
                        second_register_address="ZERO",
                        true_branch=X,
@@ -662,6 +662,169 @@ instructions = {
 
 }
 
+def opt_dce(instructions, start=0):
+    visited = {start}
+    queue = [start]
+
+    while len(queue) > 0:
+        address = queue.pop()
+        instruction = instructions[address]
+        successors = {instruction.true_branch, instruction.false_branch}
+
+        for new_address in successors:
+            if new_address == HALT or new_address in visited:
+                continue
+
+            visited.add(new_address)
+            queue.append(new_address)
+
+    changed = False
+
+    for address in set(instructions) - visited:
+        print(f"Removed dead instruction {address}")
+
+        changed = True
+
+        del instructions[address]
+
+    return changed
+
+def is_nop_register_instruction(instruction):
+    return instruction.register_instruction == "COPY" and instruction.A == "ZERO" and instruction.B == "ZERO"
+
+def merge_instructions(first_instruction, second_instruction):
+    if first_instruction.stack_instruction == "NONE":
+        stack_instruction = second_instruction
+    elif second_instruction.stack_instruction == "NONE":
+        stack_instruction = first_instruction
+    else:
+        return None
+
+    if is_nop_register_instruction(first_instruction):
+        register_instruction = second_instruction
+    elif is_nop_register_instruction(second_instruction):
+        register_instruction = first_instruction
+    else:
+        return None
+
+    if first_instruction.output is None:
+        output_instruction = second_instruction
+    elif second_instruction.output is None:
+        output_instruction = first_instruction
+    else:
+        return None
+
+    return Instruction(
+            stack_instruction=stack_instruction.stack_instruction,
+            register_instruction=register_instruction.register_instruction,
+            branch_instruction=second_instruction.branch_instruction,
+            first_register_address=register_instruction.B,
+            second_register_address=register_instruction.A,
+            true_branch=second_instruction.true_branch,
+            false_branch=second_instruction.false_branch,
+            output=output_instruction.output)
+
+def can_reorder_instructions(first_instruction, second_instruction):
+    return first_instruction.branch_instruction == "NONE" and second_instruction.branch_instruction == "NONE" and (first_instruction.stack_instruction == "NONE" or second_instruction.stack_instruction == "NONE") and ((first_instruction.A != second_instruction.A and first_instruction.A != second_instruction.B and first_instruction.B != second_instruction.A) or is_nop_register_instruction(first_instruction) or is_nop_register_instruction(second_instruction))
+
+def opt_fold_forward(instructions, start=0):
+    changed = False
+
+    for first_address, first_instruction in instructions.items():
+        if first_instruction.branch_instruction != "NONE" or first_instruction.true_branch == HALT:
+            continue
+
+        second_address = first_instruction.true_branch
+        second_instruction = instructions[second_address]
+
+        if new_instruction := merge_instructions(first_instruction, second_instruction):
+            print(f"Merged instruction {second_address} into {first_address}")
+
+            changed = True
+
+            instructions[first_address] = new_instruction
+        else:
+            third_address = second_address
+            third_instruction = second_instruction
+            visited_instructions = [third_instruction]
+
+            while third_instruction.branch_instruction == "NONE" and third_instruction.true_branch != HALT:
+                predecessors = set()
+
+                for address, instruction in instructions.items():
+                    if instruction.true_branch == third_address or instruction.false_branch == third_address:
+                        predecessors.add(address)
+
+                if len(predecessors) > 1:
+                    break
+
+                fourth_address = third_instruction.true_branch
+                fourth_instruction = instructions[fourth_address]
+
+                if fourth_instruction.branch_instruction != "NONE":
+                    break
+
+                can_reorder = True
+
+                for instruction in visited_instructions:
+                    if not can_reorder_instructions(instruction, fourth_instruction):
+                        can_reorder = False
+
+                        break
+
+                if not can_reorder:
+                    break
+
+                if new_instruction := merge_instructions(first_instruction, fourth_instruction):
+                    print(f"Merged instruction {fourth_address} into {first_address}")
+
+                    changed = True
+
+                    instructions[first_address] = Instruction(
+                            stack_instruction=new_instruction.stack_instruction,
+                            register_instruction=new_instruction.register_instruction,
+                            branch_instruction=new_instruction.branch_instruction,
+                            first_register_address=new_instruction.B,
+                            second_register_address=new_instruction.A,
+                            true_branch=second_address,
+                            false_branch=second_address,
+                            output=new_instruction.output)
+
+                    instructions[third_address] = Instruction(
+                            stack_instruction=third_instruction.stack_instruction,
+                            register_instruction=third_instruction.register_instruction,
+                            branch_instruction=third_instruction.branch_instruction,
+                            first_register_address=third_instruction.B,
+                            second_register_address=third_instruction.A,
+                            true_branch=fourth_instruction.true_branch,
+                            false_branch=fourth_instruction.false_branch,
+                            output=third_instruction.output)
+
+                    break
+
+                third_address = fourth_address
+                third_instruction = fourth_instruction
+
+                visited_instructions.append(fourth_instruction)
+
+    return changed
+
+changed = True
+
+while changed:
+    changed = False
+    changed |= opt_dce(instructions)
+    changed |= opt_fold_forward(instructions)
+
+# old_to_new = {255: 255}
+#
+# index = 0
+# for k in instructions:
+#     old_to_new[k] = index
+#     index += 1
+#
+# new_instructions = {}
+#
 
 def reindex_instructions(insts, old_start, old_halt):
     old_to_new = {}
