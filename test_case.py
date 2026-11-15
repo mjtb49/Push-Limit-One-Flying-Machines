@@ -1,16 +1,17 @@
 import sys
 
-y_height = 2  # 21
-y_buffer = 2
+y_height = 21  # 21
+y_buffer = 1
 
 
 class FlyingMachine:
 
-    def __init__(self, n):
-        self.n = n
+    def __init__(self, z_width, x_width):
+        self.n = z_width
+        self.m = x_width
 
     def move_machine(self):
-        x_machine_width = self.n
+        x_machine_width = self.m
         z_machine_width = self.n
         z_jump_size = z_machine_width
 
@@ -103,7 +104,8 @@ class FlyingMachine:
         else:
             print(f"pulse {dx}")
 
-with open("test42.txt", "w", encoding="utf-8") as f:
+
+with open("test_mixed_widths.txt", "w", encoding="utf-8") as f:
     sys.stdout = f
-    f = FlyingMachine(4)
+    f = FlyingMachine(164, 134)
     f.move_machine()

@@ -289,9 +289,14 @@ def process_stack_instruction():
     return
 
 
-y_height = 2  # 32
-y_buffer = 2
-n = 4  # 256
+# y_height = 21  # 32
+# y_buffer = 1
+# n = 164
+# m = 134
+y_height = 2
+y_buffer = 1
+n = 3
+m = 5
 stack = 0
 just_removed = 0
 active_axis = Y_AXIS
@@ -317,7 +322,7 @@ def main_loop():
         while z2 != 0:
             z1 += 1
             x = 2
-            while x != n + 2:
+            while x != m + 2:
                 dx = x
                 dy = y2
                 dz = z1
@@ -338,7 +343,7 @@ def main_loop():
             z2 -= 1
 
 normal_out = sys.stdout
-with open("test42a.txt", "w", encoding="utf-8") as f:
+with open("test_mixed_widths_a.txt", "w", encoding="utf-8") as f:
     sys.stdout = f
     main_loop()
     first_loop = 0

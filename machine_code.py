@@ -17,19 +17,20 @@ NO_AXIS = 0b00
 
 _name_map = {Y_AXIS: "y", X_AXIS: "x", Z_AXIS: "z", NO_AXIS: "base"}
 
-y_height = 2  # 32
-y_buffer = 2
-n = 4
+y_height = 21  # 32
+y_buffer = 1
+z_width = 164
+x_width = 134
 
 dynamic_variables = {
     "just_removed": 0,
     "active_axis": Y_AXIS,
     "y1": 3 * y_height + y_height + y_buffer,
     "y2": -1,
-    "z1": n,
+    "z1": z_width,
     "z2": 0,
-    "x": n + 2,
-    "dx": n + 1,
+    "x": x_width + 2,
+    "dx": x_width + 1,
     "dy": 0,
     "dz": 1,
     "dummy": 2,
@@ -40,10 +41,10 @@ dynamic_variables = {
 constants = {
     # constants, don't modify until optimizing later
     "Y_HEIGHT": y_height,
-    "N": n,
+    "Z_ITERATION_BOUND": z_width,
     "C1": 3 * y_height + y_height + y_buffer,
     "C2": y_height + y_buffer,
-    "C3": n + 2,
+    "X_ITERATION_BOUND": x_width + 2,
     "C4": y_height + y_buffer - 3,
     "ZERO": 0,
     "ONE": 1,
@@ -426,13 +427,13 @@ instructions = {
     10006: ADD("THREE", "y2", 20001),
 
     20001: COPY("ZERO", "z1", 20002),
-    20002: COPY("N", "z2", 2),
+    20002: COPY("Z_ITERATION_BOUND", "z2", 2),
     # begin first main z while loop
     2: EQUALS("ZERO", "z2", 0, 3),
     3: ADD("ONE", "z1", 40001),
     40001: COPY("TWO", "x", 4),
     # begin first main x while loop
-    4: EQUALS("C3", "x", 136, 5),
+    4: EQUALS("X_ITERATION_BOUND", "x", 136, 5),
     5: COPY("y2", "dy", 6),
     6: COPY("x", "dx", 7),
     7: COPY("z1", "dz", 8),
@@ -891,13 +892,14 @@ def run_instructions(start=0):
 
     witnessed_variables = set()
     new_instructions, new_start, new_halt = from_observer_matrix("observer_matrix.txt") # reindex_instructions(instructions, start, HALT)
+    # new_instructions, new_start, new_halt = reindex_instructions(instructions, start, HALT)
     new_code = new_start
 
     print(len(variables), len(instructions))
     print(variables)
 
     print("Start:", new_start, "Halt:",new_halt)
-    with open("test42b.txt", "w", encoding="utf-8") as f:
+    with open("test_mixed_widths_b.txt", "w", encoding="utf-8") as f:
         out = sys.stdout
         sys.stdout = f
 
