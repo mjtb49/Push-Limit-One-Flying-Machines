@@ -209,8 +209,6 @@ def instruction_from_string(s):
         output=output if output != "None" else None,
         address=address
     )
-    print(str(i))
-    print(s)
     assert str(i) == s
     return i
 
@@ -892,11 +890,11 @@ def run_instructions(start=0):
     global count
 
     witnessed_variables = set()
-    new_instructions, new_start, new_halt = from_observer_matrix("observer_matrix.txt") #  reindex_instructions(instructions, start, HALT)
+    new_instructions, new_start, new_halt = from_observer_matrix("observer_matrix.txt") # reindex_instructions(instructions, start, HALT)
     new_code = new_start
 
-    # print(len(variables), len(instructions))
-    # print(variables)
+    print(len(variables), len(instructions))
+    print(variables)
 
     print("Start:", new_start, "Halt:",new_halt)
     with open("test42b.txt", "w", encoding="utf-8") as f:
@@ -920,12 +918,12 @@ def run_instructions(start=0):
             # time.sleep(0.1)
         sys.stdout = out
     print(f"Total {count} steps")
-    # print(len(variables), len(new_instructions), len(witnessed_variables))
-    # print(variables)
-    #
-    # print(var_addresses)
-    # for i in range(len(new_instructions)):
-    #     print(new_instructions[i])
+    print(len(variables), len(new_instructions), len(witnessed_variables))
+    print(variables)
+
+    print(var_addresses)
+    for i in range(len(new_instructions)):
+        print(new_instructions[i])
 
 
 run_instructions()
