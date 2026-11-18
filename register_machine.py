@@ -1,5 +1,6 @@
 import sys
 from enum import Enum
+
 # All arms should go x direction, then z, then y out from active machine.
 Y_AXIS = 0b11
 Z_AXIS = 0b10
@@ -31,7 +32,7 @@ def push_to_stack(code, bits):
 
 
 def pop_from_stack(bits):
-    assert bits in { 3}
+    assert bits in {3}
     global stack
     code = stack & ((1 << bits) - 1)
     stack >>= bits
@@ -81,7 +82,6 @@ def modify_active_axis(modification):
     else:
         print("Tried to modify no axis ")
         assert False
-
 
 
 def fetch_from_store(cargo):
@@ -207,7 +207,7 @@ def recursively_remove_2():
         print(f"pulse {dx}")
         assert pop_from_stack(3) == StackInstructions.AXIS_ADJUSTED.value
         active_axis += 1
-        assert active_axis == X_AXIS # we are inside the 2x2x2 cube, so whatever piston we just pulsed is X-facing
+        assert active_axis == X_AXIS  # we are inside the 2x2x2 cube, so whatever piston we just pulsed is X-facing
         recursively_remove_1()
     else:
         fetch_from_store("o")
@@ -300,11 +300,12 @@ m = 5
 stack = 0
 just_removed = 0
 active_axis = Y_AXIS
-first_loop = 1
+# first_loop = 1
 dx = 0
 dy = 0
 dz = 0
 negative_z = 0
+
 
 def main_loop():
     global first_loop
@@ -342,6 +343,7 @@ def main_loop():
                 x += 1
             z2 -= 1
 
+
 normal_out = sys.stdout
 with open("test_mixed_widths_a.txt", "w", encoding="utf-8") as f:
     sys.stdout = f
@@ -350,7 +352,5 @@ with open("test_mixed_widths_a.txt", "w", encoding="utf-8") as f:
     main_loop()
 
 sys.stdout = normal_out
-
-
 
 # print(dx, dy, dz, x, y, z, bin(stack), negative_z, just_installed)
