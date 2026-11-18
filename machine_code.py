@@ -2,10 +2,10 @@ import sys
 
 from Instructions import *
 
-y_height = 1  # 21  # 32
-y_buffer = 1  # 1
-z_width = 3  # 164
-x_width = 2  # 134
+y_height = 21  # 32
+y_buffer = 1
+z_width = 164
+x_width = 134
 
 dynamic_variables = {
     "just_removed": 0,
